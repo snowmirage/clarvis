@@ -28,6 +28,7 @@ export interface Config {
     endpoint?: string;  // Custom endpoint for Ollama or OpenAI
     model: string;  // e.g., 'gpt-4o-mini', 'llama2', etc.
     base_instruction?: string;  // Base JARVIS instruction to prepend to all prompts
+    bypass_threshold?: number;  // Skip LLM and speak directly if message is under this character count
     prompts: {
       terse: string;
       brief: string;

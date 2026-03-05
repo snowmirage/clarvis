@@ -49,8 +49,8 @@ export class Speaker {
       return args;
     };
     
-    // Set environment variables if needed
-    const env: Record<string, string> = {};
+    // Inherit current environment and add extras if needed
+    const env: Record<string, string> = { ...process.env as Record<string, string> };
     if (this.voiceConfig.provider === 'elevenlabs' && this.voiceConfig.api_key) {
       env.ELEVENLABS_API_KEY = this.voiceConfig.api_key;
     }

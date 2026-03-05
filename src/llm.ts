@@ -35,7 +35,9 @@ class OpenAIProvider implements LLMProvider {
         messages: [
           { role: 'system', content: prompt },
           { role: 'user', content: `${label}: ${topic}\n\n${text}` }
-        ]
+        ],
+        max_tokens: 200,
+        chat_template_kwargs: { enable_thinking: false }
       })
     });
 

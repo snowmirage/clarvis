@@ -5,6 +5,7 @@
 import { parseHookInput } from './hookParser.js';
 import { loadConfig } from './config.js';
 import { extractLastAssistantMessage } from './transcript.js';
+import { cleanForSpeech } from './textCleaner.js';
 import { LLMClient } from './llm.js';
 import { Speaker } from './speaker.js';
 import { logger } from './logger.js';
@@ -59,9 +60,22 @@ async function main() {
       process.exit(0);
     }
 
-    // Process through LLM with explicit intent
-    const llm = new LLMClient(config.llm);
-    const sentences = await llm.summarize(text, contextConfig.style, context, intent, project);
+    // Clean text for speech (strip markdown, code blocks, tables, symbols)
+    const cleaned = cleanForSpeech(text);
+    logger.debug('index', 'Cleaned text for speech', { originalLength: text.length, cleanedLength: cleaned.length });
+
+    // Decide: speak directly or summarize via LLM
+    let sentences: string[];
+    const bypassThreshold = config.llm.bypass_threshold ?? 0;
+
+    if (bypassThreshold > 0 && cleaned.length <= bypassThreshold) {
+      logger.debug('index', 'Short message, bypassing LLM', { length: cleaned.length, threshold: bypassThreshold });
+      sentences = [cleaned];
+    } else {
+      // Process through LLM with explicit intent
+      const llm = new LLMClient(config.llm);
+      sentences = await llm.summarize(text, contextConfig.style, context, intent, project);
+    }
     
     // Speak the sentences - require voice config, error bubbles up if missing
     if (!config.voice) {
