@@ -7,6 +7,7 @@ export interface HookEvent {
   cwd: string;
   hook_event_name: string;
   stop_hook_active?: boolean;
+  last_assistant_message?: string;
 }
 
 export interface ClarvisMetadata {

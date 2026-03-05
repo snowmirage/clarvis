@@ -6,6 +6,7 @@ import { parseHookInput } from './hookParser.js';
 import { loadConfig } from './config.js';
 import { extractLastAssistantMessage } from './transcript.js';
 import { cleanForSpeech } from './textCleaner.js';
+import { ClarvisMetadata } from './types.js';
 import { LLMClient } from './llm.js';
 import { Speaker } from './speaker.js';
 import { logger } from './logger.js';
@@ -30,8 +31,21 @@ async function main() {
     logger.configure(config.debug);
     logger.info('clarvis', 'Hook event received', { session: hook.session_id });
     
-    // Extract message and metadata from transcript
-    const { text, metadata } = await extractLastAssistantMessage(hook.transcript_path);
+    // Use last_assistant_message from hook payload if available (faster, no race condition)
+    // Fall back to transcript file parsing
+    let text: string;
+    let metadata: ClarvisMetadata | undefined;
+
+    if (hook.last_assistant_message) {
+      logger.debug('index', 'Using last_assistant_message from hook payload', { length: hook.last_assistant_message.length });
+      text = hook.last_assistant_message;
+      metadata = undefined;
+    } else {
+      const result = await extractLastAssistantMessage(hook.transcript_path);
+      text = result.text;
+      metadata = result.metadata;
+    }
+
     if (!text) {
       process.exit(0);
     }
